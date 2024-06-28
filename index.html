@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  </head>
+  <style>
+    body.sj_financial{font-size:14px}
+    body.sj_financial{font-family:Segoe UI,sans-serif;}
+
+    body.sj_financial{
+      background-color:#ffffff ;
+      color:#666666 ;
+    }
+
+    table {
+      width: 100%;
+    }
+    table,
+    th,
+    td {
+      border: 1px solid gray;
+      border-collapse: collapse;
+    }
+    th,
+    td {
+      padding: 7px 10px;
+    }
+    th {
+      background-color: #003366;
+      color: white;
+    }
+	#rs{
+		 text-align: center; 
+		 color:#ff7c02
+	}
+    tr:nth-child(even) {
+      background-color: #ccffff;
+    }
+    tr:hover {
+      background-color: #ffccff;
+    }
+    input[type="text"] {
+      line-height: 24px;
+      box-sizing: border-box;
+      border: 1px solid blue;
+      border-radius: 5px;
+    }
+    #tdiv {
+      width: 100%;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+  </style>
+  <body>
+	<div id="tdiv">
+		<h2>Tra cứu kết quả</h2>
+	</div>
+
+  <div id="tdiv">
+      Mã HV/SV: <input type="text" id="fmsv" name="MSV" />
+      <button onclick="calculateGPA()">Tính GPA</button>
+	</div>
+
+	<div id="tdiv">
+		<label for="yearSelect">Năm học: </label>
+		<select id="yearSelect">
+      <option value="0">Tất cả</option>
+		  <option value="2024">2024</option>
+		  <option value="2023">2023</option>
+		  <option value="2022">2022</option>
+		  <option value="2021">2021</option>
+		  <option value="2020">2020</option>
+		  <option value="2019">2019</option>
+		</select>
+
+		<label for="semesterSelect" style="margin-left: 12px;">Kì: </label>
+		<select id="semesterSelect">
+		  <option value="0">Tất cả</option>
+		  <option value="1">1</option>
+		  <option value="2">2</option>
+		  <option value="3">3</option>
+
+		</select>
+	</div>
+     
+    </div>
+
+    <div id="result"></div>
+
+    <div id="inf"></div>
+
+    <script>
+      function calculateGrade(grade) {
+        switch (grade) {
+          case "A":
+            return 4.0;
+          case "B":
+            return 3.0;
+          case "C":
+            return 2.0;
+          case "D":
+            return 1.0;
+          default:
+            return 0.0; // Handle other grades as needed
+        }
+      }
+
+      // Function to calculate GPA average for a list of grades
+      function calculateAverageGPA(grades) {
+        let totalPoints = 0;
+        let totalCredits = 0;
+
+        grades.forEach(function (grade) {
+          let credit = parseFloat(grade["TC"]);
+          let gpa = calculateGrade(grade["DC"]);
+          totalPoints += gpa * credit;
+          totalCredits += credit;
+        });
+
+        if (totalCredits === 0) return 0;
+
+        return totalPoints / totalCredits;
+      }
+
+      // Function to fetch data and calculate GPA
+      function calculateGPA() {
+        let selectedYear = $("#yearSelect").val();
+        let selectedSemester = $("#semesterSelect").val();
+
+        $.ajax({
+          type: "POST",
+          url: "https://www.ttn.edu.vn/libraries/tnu/kqcq.php",
+          data: { msv: $("#fmsv").val(), dk: 10 },
+          cache: false,
+          dataType: "html",
+          success: function (data) {
+            $("#inf").html(data);
+            let grades = parseGrades(data, selectedYear, selectedSemester);
+            let averageGPA = calculateAverageGPA(grades);
+
+            // Display the result
+            $("#result").html(`<h3 id="rs"> GPA: ${averageGPA.toFixed(2)}</h3>`);
+          },
+        });
+      }
+
+      function parseGrades(data, year, semester) {
+        let grades = [];
+        let exceptionSubject = ["Thể dục cơ bản và điền kinh", "Đường lối quốc phòng và an ninh của Đảng Cộng sản Việt Nam", "Quân sự chung, chiến thuật, KT bắn súng ngắn (hoặc tiểu liên AK) và sử dụng lựu đạn", "Công tác quốc phòng - An ninh","Hiểu biết chung về quân, binh chủng", "Bóng chuyền cơ bản", "Thể dục nhịp điệu cơ bản"]
+
+        $("table:nth-of-type(2) tr").each(function (index, row) {
+          if (index == 0) return;
+
+          let yearCell = $(row).find("td:eq(0)").text().trim();
+          let semesterCell = $(row).find("td:eq(1)").text().trim();
+
+          if ((year == "0" ||
+            yearCell == year) &&
+            (semester == "0" || semester == semesterCell)
+          ) {
+            let TC = $(row).find("td:eq(9)").text().trim();
+            let DC = $(row).find("td:eq(8)").text().trim();
+            let S = $(row).find("td:eq(2)").text().trim();
+            if (!exceptionSubject.includes(S)){
+                grades.push({
+                TC: TC,
+                DC: DC,
+              });
+            }
+          } else {
+            $(row).hide();
+          }
+        });
+
+        return grades;
+      }
+    </script>
+  </body>
+</html>
