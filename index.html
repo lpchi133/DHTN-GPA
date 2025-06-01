@@ -7,47 +7,51 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   </head>
   <style>
-    body.sj_financial{font-size:14px}
-    body.sj_financial{font-family:Segoe UI,sans-serif;}
-
-    body.sj_financial{
-      background-color:#ffffff ;
-      color:#666666 ;
+    body.sj_financial {
+      font-size: 14px;
+      font-family: Segoe UI, sans-serif;
+      background-color: #ffffff;
+      color: #666666;
     }
 
     table {
       width: 100%;
     }
-    table,
-    th,
-    td {
+
+    table, th, td {
       border: 1px solid gray;
       border-collapse: collapse;
     }
-    th,
-    td {
+
+    th, td {
       padding: 7px 10px;
     }
+
     th {
       background-color: #003366;
       color: white;
     }
-	#rs{
-		 text-align: center; 
-		 color:#ff7c02
-	}
+
+    #rs {
+      text-align: center;
+      color: #ff7c02;
+    }
+
     tr:nth-child(even) {
       background-color: #ccffff;
     }
+
     tr:hover {
       background-color: #ffccff;
     }
+
     input[type="text"] {
       line-height: 24px;
       box-sizing: border-box;
       border: 1px solid blue;
       border-radius: 5px;
     }
+
     #tdiv {
       width: 100%;
       margin-bottom: 12px;
@@ -55,60 +59,51 @@
     }
   </style>
   <body>
-	<div id="tdiv">
-		<h2>Tra cứu kết quả</h2>
-	</div>
+    <div id="tdiv">
+      <h2>Tra cứu kết quả</h2>
+    </div>
 
-  <div id="tdiv">
+    <div id="tdiv">
       Mã HV/SV: <input type="text" id="fmsv" name="MSV" />
       <button onclick="calculateGPA()">Tính GPA</button>
-	</div>
+    </div>
 
-	<div id="tdiv">
-		<label for="yearSelect">Năm học: </label>
-		<select id="yearSelect">
-      <option value="0">Tất cả</option>
-		  <option value="2024">2024</option>
-		  <option value="2023">2023</option>
-		  <option value="2022">2022</option>
-		  <option value="2021">2021</option>
-		  <option value="2020">2020</option>
-		  <option value="2019">2019</option>
-		</select>
+    <div id="tdiv">
+      <label for="yearSelect">Năm học: </label>
+      <select id="yearSelect">
+        <option value="0">Tất cả</option>
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+        <option value="2022">2022</option>
+        <option value="2021">2021</option>
+        <option value="2020">2020</option>
+        <option value="2019">2019</option>
+      </select>
 
-		<label for="semesterSelect" style="margin-left: 12px;">Kì: </label>
-		<select id="semesterSelect">
-		  <option value="0">Tất cả</option>
-		  <option value="1">1</option>
-		  <option value="2">2</option>
-		  <option value="3">3</option>
-
-		</select>
-	</div>
-     
+      <label for="semesterSelect" style="margin-left: 12px;">Kì: </label>
+      <select id="semesterSelect">
+        <option value="0">Tất cả</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+      </select>
     </div>
 
     <div id="result"></div>
-
     <div id="inf"></div>
 
     <script>
       function calculateGrade(grade) {
         switch (grade) {
-          case "A":
-            return 4.0;
-          case "B":
-            return 3.0;
-          case "C":
-            return 2.0;
-          case "D":
-            return 1.0;
-          default:
-            return 0.0; // Handle other grades as needed
+          case "A": return 4.0;
+          case "B": return 3.0;
+          case "C": return 2.0;
+          case "D": return 1.0;
+          case "F": return 0.0;
+          default: return 0.0;
         }
       }
 
-      // Function to calculate GPA average for a list of grades
       function calculateAverageGPA(grades) {
         let totalPoints = 0;
         let totalCredits = 0;
@@ -125,7 +120,6 @@
         return totalPoints / totalCredits;
       }
 
-      // Function to fetch data and calculate GPA
       function calculateGPA() {
         let selectedYear = $("#yearSelect").val();
         let selectedSemester = $("#semesterSelect").val();
@@ -138,44 +132,66 @@
           dataType: "html",
           success: function (data) {
             $("#inf").html(data);
-            let grades = parseGrades(data, selectedYear, selectedSemester);
-            let averageGPA = calculateAverageGPA(grades);
-
-            // Display the result
-            $("#result").html(`<h3 id="rs"> GPA: ${averageGPA.toFixed(2)}</h3>`);
-          },
+            renderEditableTable(data, selectedYear, selectedSemester);
+          }
         });
       }
 
-      function parseGrades(data, year, semester) {
+      function renderEditableTable(data, year, semester) {
+        let $table = $(data).filter("table").eq(1).clone();
+
+        $table.find("tr").each(function (i, row) {
+          if (i === 0) return;
+          let $td = $(row).find("td").eq(8);
+          let val = $td.text().trim();
+
+          $td.html(`
+            <select class="grade-select" style="width:50px;text-align:center">
+              <option value="X" ${val === "X" ? "selected" : ""}>X</option>
+              <option value="A" ${val === "A" ? "selected" : ""}>A</option>
+              <option value="B" ${val === "B" ? "selected" : ""}>B</option>
+              <option value="C" ${val === "C" ? "selected" : ""}>C</option>
+              <option value="D" ${val === "D" ? "selected" : ""}>D</option>
+              <option value="F" ${val === "F" ? "selected" : ""}>F</option>
+            </select>
+          `);
+        });
+
+        $("#result").html($table);
+        calculateAndShowGPA($table);
+
+        $(".grade-select").on("change", function () {
+          calculateAndShowGPA($table);
+        });
+      }
+
+      function calculateAndShowGPA($table) {
         let grades = [];
-        let exceptionSubject = ["Thể dục cơ bản và điền kinh", "Đường lối quốc phòng và an ninh của Đảng Cộng sản Việt Nam", "Quân sự chung, chiến thuật, KT bắn súng ngắn (hoặc tiểu liên AK) và sử dụng lựu đạn", "Công tác quốc phòng - An ninh","Hiểu biết chung về quân, binh chủng", "Bóng chuyền cơ bản", "Thể dục nhịp điệu cơ bản"]
+        let exceptionSubject = [
+          "Thể dục cơ bản và điền kinh", "Đường lối quốc phòng và an ninh của Đảng Cộng sản Việt Nam",
+          "Quân sự chung, chiến thuật, KT bắn súng ngắn (hoặc tiểu liên AK) và sử dụng lựu đạn",
+          "Công tác quốc phòng - An ninh", "Hiểu biết chung về quân, binh chủng",
+          "Bóng chuyền cơ bản", "Thể dục nhịp điệu cơ bản"
+        ];
 
-        $("table:nth-of-type(2) tr").each(function (index, row) {
-          if (index == 0) return;
-
-          let yearCell = $(row).find("td:eq(0)").text().trim();
-          let semesterCell = $(row).find("td:eq(1)").text().trim();
-
-          if ((year == "0" ||
-            yearCell == year) &&
-            (semester == "0" || semester == semesterCell)
-          ) {
-            let TC = $(row).find("td:eq(9)").text().trim();
-            let DC = $(row).find("td:eq(8)").text().trim();
-            let S = $(row).find("td:eq(2)").text().trim();
-            if (!exceptionSubject.includes(S)){
-                grades.push({
-                TC: TC,
-                DC: DC,
-              });
+        $table.find("tr").each(function (i, row) {
+          if (i === 0) return;
+          let S = $(row).find("td").eq(2).text().trim();
+          if (!exceptionSubject.includes(S)) {
+            let TC = $(row).find("td").eq(9).text().trim();
+            let DC = $(row).find("td").eq(8).find("select").val().trim();
+            if (DC !== "X") {
+              grades.push({ TC, DC });
             }
-          } else {
-            $(row).hide();
           }
         });
 
-        return grades;
+        let averageGPA = calculateAverageGPA(grades);
+        if ($("#gpa-result").length) {
+          $("#gpa-result").text(`GPA: ${averageGPA.toFixed(2)}`);
+        } else {
+          $("#result").prepend(`<h3 id="gpa-result" style="color:#ff7c02;text-align:center">GPA: ${averageGPA.toFixed(2)}</h3>`);
+        }
       }
     </script>
   </body>
