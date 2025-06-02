@@ -155,35 +155,45 @@
         });
       }
 
+      // ...existing code...
+      // ...existing code...
       function renderEditableTable(data, year, semester) {
         let $table = $(data).filter("table").eq(1).clone();
 
         $table.find("tr").each(function (i, row) {
           if (i === 0) return;
-          let $td = $(row).find("td").eq(8);
-          let val = $td.text().trim();
-
-          $td.html(`
-            <select class="grade-select" style="width:50px;text-align:center">
-              <option value="X" ${val === "X" ? "selected" : ""}>X</option>
-              <option value="A" ${val === "A" ? "selected" : ""}>A</option>
-              <option value="B" ${val === "B" ? "selected" : ""}>B</option>
-              <option value="C" ${val === "C" ? "selected" : ""}>C</option>
-              <option value="D" ${val === "D" ? "selected" : ""}>D</option>
-              <option value="F" ${val === "F" ? "selected" : ""}>F</option>
-            </select>
-          `);
+          let rowYear = $(row).find("td").eq(0).text().trim();
+          let rowSemester = $(row).find("td").eq(1).text().trim();
+          if (
+            (year !== "0" && rowYear !== year) ||
+            (semester !== "0" && rowSemester !== semester)
+          ) {
+            $(row).hide();
+          } else {
+            let $td = $(row).find("td").eq(8);
+            let val = $td.text().trim();
+            $td.html(`
+        <select class="grade-select" style="width:50px;text-align:center">
+          <option value="X" ${val === "X" ? "selected" : ""}>X</option>
+          <option value="A" ${val === "A" ? "selected" : ""}>A</option>
+          <option value="B" ${val === "B" ? "selected" : ""}>B</option>
+          <option value="C" ${val === "C" ? "selected" : ""}>C</option>
+          <option value="D" ${val === "D" ? "selected" : ""}>D</option>
+          <option value="F" ${val === "F" ? "selected" : ""}>F</option>
+        </select>
+      `);
+          }
         });
 
         $("#result").html($table);
-        calculateAndShowGPA($table);
+        calculateAndShowGPA($table, year, semester);
 
         $(".grade-select").on("change", function () {
-          calculateAndShowGPA($table);
+          calculateAndShowGPA($table, year, semester);
         });
       }
 
-      function calculateAndShowGPA($table) {
+      function calculateAndShowGPA($table, year, semester) {
         let grades = [];
         let exceptionSubject = [
           "Thể dục cơ bản và điền kinh",
@@ -198,11 +208,19 @@
         $table.find("tr").each(function (i, row) {
           if (i === 0) return;
           let S = $(row).find("td").eq(2).text().trim();
-          if (!exceptionSubject.includes(S)) {
-            let TC = $(row).find("td").eq(9).text().trim();
-            let DC = $(row).find("td").eq(8).find("select").val().trim();
-            if (DC !== "X") {
-              grades.push({ TC, DC });
+          let rowYear = $(row).find("td").eq(0).text().trim();
+          let rowSemester = $(row).find("td").eq(1).text().trim();
+
+          if (
+            (year === "0" || rowYear === year) &&
+            (semester === "0" || rowSemester === semester)
+          ) {
+            if (!exceptionSubject.includes(S)) {
+              let TC = $(row).find("td").eq(9).text().trim();
+              let DC = $(row).find("td").eq(8).find("select").val().trim();
+              if (DC !== "X") {
+                grades.push({ TC, DC });
+              }
             }
           }
         });
@@ -218,6 +236,14 @@
           );
         }
       }
+      $("#yearSelect, #semesterSelect").on("change", function () {
+        let selectedYear = $("#yearSelect").val();
+        let selectedSemester = $("#semesterSelect").val();
+        let $table = $("#result table");
+        if ($table.length) {
+          calculateAndShowGPA($table, selectedYear, selectedSemester);
+        }
+      });
     </script>
   </body>
 </html>
